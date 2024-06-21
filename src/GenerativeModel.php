@@ -24,39 +24,14 @@ class GenerativeModel
 
     /** @var SafetySetting[] */
     private array $safetySettings = [];
+    private array $systemInstructions = [];
 
     private ?GenerationConfig $generationConfig = null;
-
-    private array $systemInstructions = []; // Added property for system instructions
 
     public function __construct(
         private readonly Client $client,
         public readonly ModelName $modelName,
     ) {
-    }
-
-    /**
-     * Adds a safety setting to the configuration.
-     * @param SafetySetting $safetySetting
-     * @return self
-     */
-    public function withAddedSafetySetting(SafetySetting $safetySetting): self
-    {
-        $clone = clone $this;
-        $clone->safetySettings[] = $safetySetting;
-        return $clone;
-    }
-
-    /**
-     * Configures generation settings.
-     * @param GenerationConfig $generationConfig
-     * @return self
-     */
-    public function withGenerationConfig(GenerationConfig $generationConfig): self
-    {
-        $clone = clone $this;
-        $clone->generationConfig = $generationConfig;
-        return $clone;
     }
 
     /**
@@ -72,9 +47,6 @@ class GenerativeModel
     }
 
     /**
-     * Generates content based on parts.
-     * @param PartInterface ...$parts
-     * @return GenerateContentResponse
      * @throws ClientExceptionInterface
      */
     public function generateContent(PartInterface ...$parts): GenerateContentResponse
@@ -85,9 +57,7 @@ class GenerativeModel
     }
 
     /**
-     * Generates content with detailed contents.
      * @param Content[] $contents
-     * @return GenerateContentResponse
      * @throws ClientExceptionInterface
      */
     public function generateContentWithContents(array $contents): GenerateContentResponse
@@ -99,14 +69,85 @@ class GenerativeModel
             $contents,
             $this->safetySettings,
             $this->generationConfig,
-            $this->systemInstructions  // Include system instructions in the request
         );
 
         return $this->client->generateContent($request);
     }
 
+    /**
+     * @param callable(GenerateContentResponse): void $callback
+     * @param PartInterface[] $parts
+     * @param CurlHandle|null $ch
+     * @return void
+     */
+    public function generateContentStream(
+        callable $callback,
+        array $parts,
+        ?CurlHandle $ch = null,
+    ): void {
+        $this->ensureArrayOfType($parts, PartInterface::class);
+
+        $content = new Content($parts, Role::User);
+
+        $this->generateContentStreamWithContents($callback, [$content], $ch);
+    }
+
+    /**
+     * @param callable(GenerateContentResponse): void $callback
+     * @param Content[] $contents
+     * @param CurlHandle|null $ch
+     * @return void
+     */
+    public function generateContentStreamWithContents(
+        callable $callback,
+        array $contents,
+        ?CurlHandle $ch = null,
+    ): void {
+        $this->ensureArrayOfType($contents, Content::class);
+
+        $request = new GenerateContentStreamRequest(
+            $this->modelName,
+            $contents,
+            $this->safetySettings,
+            $this->generationConfig,
+            $this->systemInstructions  // Passing the system instructions
+        );
+
+        $this->client->generateContentStream($request, $callback, $ch);
+    }
+
     public function startChat(): ChatSession
     {
         return new ChatSession($this);
+    }
+
+    /**
+     * @throws ClientExceptionInterface
+     */
+    public function countTokens(PartInterface ...$parts): CountTokensResponse
+    {
+        $content = new Content($parts, Role::User);
+        $request = new CountTokensRequest(
+            $this->modelName,
+            [$content],
+        );
+
+        return $this->client->countTokens($request);
+    }
+
+    public function withAddedSafetySetting(SafetySetting $safetySetting): self
+    {
+        $clone = clone $this;
+        $clone->safetySettings[] = $safetySetting;
+
+        return $clone;
+    }
+
+    public function withGenerationConfig(GenerationConfig $generationConfig): self
+    {
+        $clone = clone $this;
+        $clone->generationConfig = $generationConfig;
+
+        return $clone;
     }
 }
