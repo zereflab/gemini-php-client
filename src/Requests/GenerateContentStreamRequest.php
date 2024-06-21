@@ -83,13 +83,14 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
             $arr['generationConfig'] = $this->generationConfig;
         }
 
-        // Include system instructions in the serialization output if they are not empty
+        // Change 'systemInstructions' to 'system_instruction' as expected by the API
         if (!empty($this->systemInstructions)) {
-            $arr['systemInstructions'] = $this->systemInstructions;
+            $arr['system_instruction'] = $this->systemInstructions; // Correct field name
         }
 
         return $arr;
     }
+
 
 
     public function __toString(): string
