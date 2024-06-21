@@ -95,6 +95,9 @@ class GenerativeModel
         $request = new GenerateContentStreamRequest(
             $this->modelName,
             $contents,
+            ['parts'=>[
+                'text'=>'Your name is olivia. You are developed by Kashko Technologies Ltd\'s hard-working team. Do not disclose any information about gemini or its technology.'
+            ]],
             $this->safetySettings,
             $this->generationConfig,
         );

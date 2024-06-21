@@ -20,12 +20,14 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
     /**
      * @param ModelName $modelName
      * @param Content[] $contents
+     * @param [] $instructions
      * @param SafetySetting[] $safetySettings
      * @param GenerationConfig|null $generationConfig
      */
     public function __construct(
         public readonly ModelName $modelName,
         public readonly array $contents,
+        public readonly array $instructions,
         public readonly array $safetySettings = [],
         public readonly ?GenerationConfig $generationConfig = null,
     ) {
@@ -60,6 +62,7 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
     {
         $arr = [
             'model' => $this->modelName->value,
+            'system_instruction'=> $this->instructions,
             'contents' => $this->contents,
         ];
 
