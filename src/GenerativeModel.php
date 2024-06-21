@@ -27,15 +27,21 @@ class GenerativeModel
 
     private ?GenerationConfig $generationConfig = null;
 
+    private array $systemInstructions = []; // Added property for system instructions
+
     public function __construct(
         private readonly Client $client,
         public readonly ModelName $modelName,
     ) {
     }
 
-    /**
-     * @throws ClientExceptionInterface
-     */
+    public function withSystemInstructions(array $instructions): self
+    {
+        $clone = clone $this;
+        $clone->systemInstructions = $instructions;
+        return $clone;
+    }
+
     public function generateContent(PartInterface ...$parts): GenerateContentResponse
     {
         $content = new Content($parts, Role::User);
@@ -43,10 +49,6 @@ class GenerativeModel
         return $this->generateContentWithContents([$content]);
     }
 
-    /**
-     * @param Content[] $contents
-     * @throws ClientExceptionInterface
-     */
     public function generateContentWithContents(array $contents): GenerateContentResponse
     {
         $this->ensureArrayOfType($contents, Content::class);
@@ -56,87 +58,16 @@ class GenerativeModel
             $contents,
             $this->safetySettings,
             $this->generationConfig,
+            $this->systemInstructions  // Include system instructions in the request
         );
 
         return $this->client->generateContent($request);
     }
 
-    /**
-     * @param callable(GenerateContentResponse): void $callback
-     * @param PartInterface[] $parts
-     * @param CurlHandle|null $ch
-     * @return void
-     */
-    public function generateContentStream(
-        callable $callback,
-        array $parts,
-        ?CurlHandle $ch = null,
-    ): void {
-        $this->ensureArrayOfType($parts, PartInterface::class);
-
-        $content = new Content($parts, Role::User);
-
-        $this->generateContentStreamWithContents($callback, [$content], $ch);
-    }
-
-    /**
-     * @param callable(GenerateContentResponse): void $callback
-     * @param Content[] $contents
-     * @param CurlHandle|null $ch
-     * @return void
-     */
-    public function generateContentStreamWithContents(
-        callable $callback,
-        array $contents,
-        ?CurlHandle $ch = null,
-    ): void {
-        $this->ensureArrayOfType($contents, Content::class);
-
-        $request = new GenerateContentStreamRequest(
-            $this->modelName,
-            $contents,
-            ['parts'=>[
-                'text'=>'Your name is olivia. You are developed by Kashko Technologies Ltd\'s hard-working team. Do not disclose any information about gemini or its technology.'
-            ]],
-            $this->safetySettings,
-            $this->generationConfig,
-        );
-
-        $this->client->generateContentStream($request, $callback, $ch);
-    }
+    // Ensure other methods that generate content also include system instructions as needed.
 
     public function startChat(): ChatSession
     {
         return new ChatSession($this);
-    }
-
-    /**
-     * @throws ClientExceptionInterface
-     */
-    public function countTokens(PartInterface ...$parts): CountTokensResponse
-    {
-        $content = new Content($parts, Role::User);
-        $request = new CountTokensRequest(
-            $this->modelName,
-            [$content],
-        );
-
-        return $this->client->countTokens($request);
-    }
-
-    public function withAddedSafetySetting(SafetySetting $safetySetting): self
-    {
-        $clone = clone $this;
-        $clone->safetySettings[] = $safetySetting;
-
-        return $clone;
-    }
-
-    public function withGenerationConfig(GenerationConfig $generationConfig): self
-    {
-        $clone = clone $this;
-        $clone->generationConfig = $generationConfig;
-
-        return $clone;
     }
 }
