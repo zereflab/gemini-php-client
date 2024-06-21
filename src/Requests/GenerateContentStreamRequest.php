@@ -73,6 +73,7 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
         $arr = [
             'model' => $this->modelName->value,
             'contents' => $this->contents,
+            'system_instruction' => $this->systemInstructions
         ];
 
         if (!empty($this->safetySettings)) {
@@ -82,12 +83,6 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
         if ($this->generationConfig) {
             $arr['generationConfig'] = $this->generationConfig;
         }
-
-        // Include 'system_instruction' correctly
-        if (!empty($this->systemInstructions)) {
-            $arr['system_instruction'] = $this->systemInstructions;
-        }
-
         return $arr;
     }
 
