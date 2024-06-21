@@ -90,7 +90,7 @@ class GenerateContentStreamRequest implements JsonSerializable, RequestInterface
 
         return $arr;
     }
-    
+
 
     public function __toString(): string
     {
