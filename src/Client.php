@@ -222,6 +222,44 @@ class Client implements GeminiClientInterface
     }
 
     /**
+     * Sends a system instruction to the API.
+     *
+     * @param string $instruction The instruction to be sent.
+     * @param array $parameters Optional parameters for the instruction.
+     * @return array The response from the API.
+     * @throws ClientExceptionInterface
+     */
+    public function systemInstruction(string $instruction, array $parameters = []): array
+    {
+        // Build the request payload
+        $payload = json_encode([
+            'instruction' => $instruction,
+            'parameters' => $parameters,
+        ]);
+
+        // Create a new request using the existing request factory
+        $httpRequest = $this->requestFactory->createRequest('POST', "{$this->baseUrl}/v1/system_instruction");
+        $stream = $this->streamFactory->createStream($payload);
+        $httpRequest = $httpRequest->withBody($stream)->withAddedHeader('Content-Type', 'application/json');
+
+        // Send the request using the HttpClient
+        $response = $this->client->sendRequest($httpRequest);
+        if ($response->getStatusCode() !== 200) {
+            throw new RuntimeException(
+                sprintf(
+                    'Failed to execute system instruction: status_code=%d, response=%s',
+                    $response->getStatusCode(),
+                    $response->getBody()
+                )
+            );
+        }
+
+        // Return the decoded JSON response
+        return json_decode((string) $response->getBody(), true);
+    }
+
+
+    /**
      * @throws ClientExceptionInterface
      */
     private function doRequest(RequestInterface $request): string
