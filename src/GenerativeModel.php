@@ -113,6 +113,7 @@ class GenerativeModel
             $this->systemInstructions  // Passing the system instructions
         );
 
+
         $this->client->generateContentStream($request, $callback, $ch);
     }
 

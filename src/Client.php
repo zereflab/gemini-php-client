@@ -143,7 +143,7 @@ class Client implements GeminiClientInterface
             }
         }
 
-        curl_setopt($ch, CURLOPT_URL, "{$this->baseUrl}/v1/{$request->getOperation()}");
+        curl_setopt($ch, CURLOPT_URL, "{$this->baseUrl}/v1beta/{$request->getOperation()}");
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request));
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headerLines);
